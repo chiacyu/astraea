@@ -21,7 +21,6 @@ import java.util.Map;
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.PartitionInfo;
-import org.apache.kafka.common.utils.Utils;
 
 public class YourPartitioner implements Partitioner {
 
@@ -34,7 +33,7 @@ public class YourPartitioner implements Partitioner {
   public int partition(
       String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
     List<PartitionInfo> partitions = cluster.availablePartitionsForTopic(topic);
-    int seed =  (int)(Math.random() * 100);
+    int seed = (int) (Math.random() * 100);
     if (!partitions.isEmpty()) {
       int part = seed % partitions.size();
       return partitions.get(part).partition();
