@@ -16,27 +16,50 @@
  */
 package org.astraea.common.partitioner;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.PartitionInfo;
 
 public class YourPartitioner implements Partitioner {
+  private Map<Integer, Long> partitionLoading = new HashMap<>();
 
   // get your magic configs
   @Override
   public void configure(Map<String, ?> configs) {}
 
-  // write your magic code
+  /**
+   * Compute the partition for the given record.
+   *
+   * @param topic The topic name
+   * @param key The key to partition on (or null if no key)
+   * @param keyBytes The serialized key to partition on( or null if no key)
+   * @param value The value to partition on or null
+   * @param valueBytes The serialized value to partition on or null
+   * @param cluster The current cluster metadata
+   */
   @Override
   public int partition(
       String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
     List<PartitionInfo> partitions = cluster.availablePartitionsForTopic(topic);
-    int seed = (int) (Math.random() * 100);
+    int partitionNum = partitions.size();
+    if (partitionLoading.isEmpty()) {
+      IntStream.range(0, partitionNum).forEach(i -> partitionLoading.put(i, Long.valueOf(0)));
+    }
     if (!partitions.isEmpty()) {
-      int part = seed % partitions.size();
-      return partitions.get(part).partition();
+      int partitionIndex = -1;
+      Long currentSum = partitionLoading.get(0).longValue();
+      for (int i = 0; i < partitions.size(); i++) {
+        if (partitionLoading.get(i).longValue() < currentSum) {
+          currentSum = partitionLoading.get(i).longValue();
+          partitionIndex = i;
+        }
+      }
+      partitionLoading.put(partitionIndex, currentSum + valueBytes.length);
+      return partitions.get(partitionIndex).partition();
     } else {
       return -1;
     }
