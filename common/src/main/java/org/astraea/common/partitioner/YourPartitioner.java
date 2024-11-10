@@ -58,7 +58,7 @@ public class YourPartitioner implements Partitioner {
           partitionIndex = i;
         }
       }
-      partitionLoading.put(partitionIndex, currentSum + valueBytes.length);
+      partitionLoading.put(partitionIndex, currentSum + (valueBytes == null ? 0 : valueBytes.length));
       return partitions.get(partitionIndex).partition();
     } else {
       return -1;
