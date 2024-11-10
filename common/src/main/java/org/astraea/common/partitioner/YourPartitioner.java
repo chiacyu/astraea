@@ -50,7 +50,7 @@ public class YourPartitioner implements Partitioner {
       IntStream.range(0, partitionNum).forEach(i -> partitionLoading.put(i, Long.valueOf(0)));
     }
     if (!partitions.isEmpty()) {
-      int partitionIndex = -1;
+      int partitionIndex = 0;
       Long currentSum = partitionLoading.get(0).longValue();
       for (int i = 0; i < partitions.size(); i++) {
         if (partitionLoading.get(i).longValue() < currentSum) {
