@@ -20,6 +20,7 @@ import com.beust.jcommander.Parameter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -45,26 +46,30 @@ public class BulkSender {
         admin.createTopics(List.of(new NewTopic(t, 3, (short) 1))).all();
       }
     }
-    // you must manage producers for best performance
+    Properties props = new Properties();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers());
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+    props.put(ProducerConfig.BATCH_SIZE_CONFIG, 32 * 1024);
+    props.put(ProducerConfig.LINGER_MS_CONFIG, 10);
+    props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+    props.put(ProducerConfig.ACKS_CONFIG, "1");
+    props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 64 * 1024 * 1024);
+    props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
     try {
-      var producerA = new KafkaProducer<>(Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers()), new StringSerializer(), new StringSerializer());
-      var producerB = new KafkaProducer<>(Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers()), new StringSerializer(), new StringSerializer());
+      var producer = new KafkaProducer<>(props);
 
       var size = new AtomicLong(0);
       var key = "key";
       var value = "value";
       while (size.get() < param.dataSize.bytes()) {
         var topic = param.topics.get((int) (Math.random() * param.topics.size()));
-        producerA.send(
+        producer.send(
             new ProducerRecord<>(topic, key, value),
             (m, e) -> {
               if (e == null) size.addAndGet(m.serializedKeySize() + m.serializedValueSize());
             });
-        producerB.send(
-                new ProducerRecord<>(topic, key, value),
-                (m, e) -> {
-                  if (e == null) size.addAndGet(m.serializedKeySize() + m.serializedValueSize());
-                });
       }
     } catch (Exception e) {
         throw new RuntimeException(e);
