@@ -42,26 +42,32 @@ public class BulkSender {
     try (var admin =
         Admin.create(Map.of(AdminConfigs.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers()))) {
       for (var t : param.topics) {
-        admin.createTopics(List.of(new NewTopic(t, 1, (short) 1))).all();
+        admin.createTopics(List.of(new NewTopic(t, 3, (short) 1))).all();
       }
     }
     // you must manage producers for best performance
-    try (var producer =
-        new KafkaProducer<>(
-            Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers()),
-            new StringSerializer(),
-            new StringSerializer())) {
+    try {
+      var producerA = new KafkaProducer<>(Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers()), new StringSerializer(), new StringSerializer());
+      var producerB = new KafkaProducer<>(Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers()), new StringSerializer(), new StringSerializer());
+
       var size = new AtomicLong(0);
       var key = "key";
       var value = "value";
       while (size.get() < param.dataSize.bytes()) {
         var topic = param.topics.get((int) (Math.random() * param.topics.size()));
-        producer.send(
+        producerA.send(
             new ProducerRecord<>(topic, key, value),
             (m, e) -> {
               if (e == null) size.addAndGet(m.serializedKeySize() + m.serializedValueSize());
             });
+        producerB.send(
+                new ProducerRecord<>(topic, key, value),
+                (m, e) -> {
+                  if (e == null) size.addAndGet(m.serializedKeySize() + m.serializedValueSize());
+                });
       }
+    } catch (Exception e) {
+        throw new RuntimeException(e);
     }
   }
 
