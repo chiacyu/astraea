@@ -51,12 +51,12 @@ public class BulkSender {
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    props.put(ProducerConfig.BATCH_SIZE_CONFIG, 100 * 1024 * 1024);
+    props.put(ProducerConfig.BATCH_SIZE_CONFIG, 64 * 1024 * 1024);
     props.put(ProducerConfig.LINGER_MS_CONFIG, 1);
     props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
     props.put(ProducerConfig.ACKS_CONFIG, "1");
     props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 64 * 1024 * 1024);
-    props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+    props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 10);
     try {
       var producer = new KafkaProducer<>(props);
 
