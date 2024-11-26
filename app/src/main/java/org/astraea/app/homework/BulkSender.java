@@ -56,7 +56,7 @@ public class BulkSender {
     props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
     props.put(ProducerConfig.ACKS_CONFIG, "1");
     props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 32 * 1024 * 1024);
-    props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 6);
+    props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 3);
     try {
       var producer = new KafkaProducer<>(props);
 
