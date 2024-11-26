@@ -20,6 +20,7 @@ import com.beust.jcommander.Parameter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -45,12 +46,20 @@ public class BulkSender {
         admin.createTopics(List.of(new NewTopic(t, 1, (short) 1))).all();
       }
     }
+    // Kafka Producer config
+    Properties props = new Properties();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers());
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    props.put(ProducerConfig.BATCH_SIZE_CONFIG, 32 * 1024);
+    props.put(ProducerConfig.LINGER_MS_CONFIG, 10);
+    props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+    props.put(ProducerConfig.ACKS_CONFIG, "1");
+    props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 64 * 1024 * 1024);
+    props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
     // you must manage producers for best performance
     try (var producer =
-        new KafkaProducer<>(
-            Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, param.bootstrapServers()),
-            new StringSerializer(),
-            new StringSerializer())) {
+        new KafkaProducer<>(props)) {
       var size = new AtomicLong(0);
       var key = "key";
       var value = "value";
