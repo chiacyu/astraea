@@ -58,8 +58,7 @@ public class BulkSender {
     props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 64 * 1024 * 1024);
     props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
     // you must manage producers for best performance
-    try (var producer =
-        new KafkaProducer<>(props)) {
+    try (var producer = new KafkaProducer<>(props)) {
       var size = new AtomicLong(0);
       var key = "key";
       var value = "value";
